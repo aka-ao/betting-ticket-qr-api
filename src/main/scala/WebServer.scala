@@ -49,7 +49,7 @@ object WebServer {
     credentials match {
       case p @ Credentials.Provided(id) =>
         try {
-          val password = config.getString(id + ".password")
+          val password = config.getString("basicAuth.user." + id + ".password")
           if (p.verify(password)) Some(id)
           else None
         } catch {

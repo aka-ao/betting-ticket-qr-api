@@ -1,20 +1,39 @@
+import java.util.concurrent.TimeUnit
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.Credentials
 import akka.stream.ActorMaterializer
+import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 
+import scala.concurrent.Future
 import scala.io.StdIn
 
 object WebServer {
   def main(args: Array[String]) {
 
+    final case class User(userName: String, int: Int)
+
     implicit val system = ActorSystem("my-system")
     implicit val materializer = ActorMaterializer()
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
+    val executor = system.dispatcher
+
+    val cache: AsyncLoadingCache[User, String] = Scaffeine()
+      .recordStats()
+      .expireAfterWrite(20, TimeUnit.SECONDS)
+      .executor(executor)
+      .buildAsyncFuture((user: User) => {
+        println(s"no cache: ${DateTime.now.toString()}")
+        Thread.sleep(3000)
+        Future.successful(s"<h1>Say hello to ${user.userName} ${user.int} </h1>")
+      })
+
+
     val route =
       pathPrefix("hello") {
         concat(
@@ -28,7 +47,10 @@ object WebServer {
           },
           path(IntNumber) { int =>
             authenticateBasic(realm = "secure site", myUserPassAuthenticator) { userName =>
-              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1>Say hello to $userName $int </h1>"))
+              val user = User.apply(userName, int)
+              complete(cache.get(user).map { id =>
+                HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1>Say hello to $userName $id </h1>")
+              })
             }
           }
         )

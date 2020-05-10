@@ -6,6 +6,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.Credentials
 import akka.stream.ActorMaterializer
+import com.github.benmanes.caffeine.cache.RemovalCause
 import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 
@@ -27,6 +28,7 @@ object WebServer {
       .recordStats()
       .expireAfterWrite(20, TimeUnit.SECONDS)
       .executor(executor)
+      .removalListener((user: User, _: Int, _: RemovalCause) => println(s"delete id: ${user.int}"))
       .buildAsyncFuture((user: User) => {
         println(s"no cache: ${DateTime.now.toString()}")
         Future.successful(user.int)

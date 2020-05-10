@@ -29,12 +29,11 @@ object WebServer {
       .executor(executor)
       .buildAsyncFuture((user: User) => {
         println(s"no cache: ${DateTime.now.toString()}")
-        Thread.sleep(3000)
         Future.successful(user.int)
       })
 
 
-    val route =
+    val route =concat(
       pathPrefix("hello") {
         concat(
           pathEnd{
@@ -54,7 +53,17 @@ object WebServer {
             }
           }
         )
+      },
+      pathPrefix("delete") {
+        path(IntNumber) { int =>
+          authenticateBasic(realm = "secure site", myUserPassAuthenticator) { userName =>
+            val user = User.apply(userName, int)
+            cache.put(user, Future.failed(new RuntimeException))
+            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say delete to akka-http</h1>"))
+          }
+        }
       }
+    )
 
 
     val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)

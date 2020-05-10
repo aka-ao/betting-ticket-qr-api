@@ -23,14 +23,14 @@ object WebServer {
     implicit val executionContext = system.dispatcher
     val executor = system.dispatcher
 
-    val cache: AsyncLoadingCache[User, String] = Scaffeine()
+    val cache: AsyncLoadingCache[User, Int] = Scaffeine()
       .recordStats()
       .expireAfterWrite(20, TimeUnit.SECONDS)
       .executor(executor)
       .buildAsyncFuture((user: User) => {
         println(s"no cache: ${DateTime.now.toString()}")
         Thread.sleep(3000)
-        Future.successful(s"<h1>Say hello to ${user.userName} ${user.int} </h1>")
+        Future.successful(user.int)
       })
 
 

@@ -16,7 +16,7 @@ import scala.io.StdIn
 object WebServer {
   def main(args: Array[String]) {
 
-    final case class User(userName: String, int: Int)
+    final case class User(userName: String, int: Int, unit: Unit)
 
     implicit val system = ActorSystem("my-system")
     implicit val materializer = ActorMaterializer()
@@ -34,21 +34,23 @@ object WebServer {
         Future.successful(user.int)
       })
 
-
     val route =concat(
       pathPrefix("hello") {
         concat(
           pathEnd{
             get {
-              extractHost { hostName =>
-                system.log.info(hostName)
-                complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
+              entity(as[String]) { json =>
+                system.log.info(json)
+                extractHost { hostName =>
+                  system.log.info(hostName)
+                  complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
+                }
               }
             }
           },
           path(IntNumber) { int =>
             authenticateBasic(realm = "secure site", myUserPassAuthenticator) { userName =>
-              val user = User.apply(userName, int)
+              val user = User.apply(userName, int, Unit)
               complete(cache.get(user).map { id =>
                 HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1>Say hello to $userName $id </h1>")
               })
@@ -59,7 +61,7 @@ object WebServer {
       pathPrefix("delete") {
         path(IntNumber) { int =>
           authenticateBasic(realm = "secure site", myUserPassAuthenticator) { userName =>
-            val user = User.apply(userName, int)
+            val user = User.apply(userName, int, Unit)
             cache.put(user, Future.failed(new RuntimeException))
             complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say delete to akka-http</h1>"))
           }

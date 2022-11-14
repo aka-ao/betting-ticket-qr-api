@@ -1,4 +1,4 @@
-package Presentation
+package presentation
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}

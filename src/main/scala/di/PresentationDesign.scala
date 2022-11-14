@@ -1,6 +1,6 @@
 package di
 
-import Presentation.{HelloPresentation, RouteRoot}
+import presentation.{HelloPresentation, RouteRoot}
 import wvlet.airframe.newDesign
 
 object PresentationDesign extends PresentationDesign

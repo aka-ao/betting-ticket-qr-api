@@ -1,16 +1,12 @@
-import java.util.concurrent.TimeUnit
-
+import Presentation.RouteRoot
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.Credentials
 import akka.stream.ActorMaterializer
-import com.github.benmanes.caffeine.cache.RemovalCause
-import com.github.blemale.scaffeine.{AsyncLoadingCache, Scaffeine}
 import com.typesafe.config.{Config, ConfigException, ConfigFactory}
+import di.DIDesign
 
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContextExecutor
 import scala.io.StdIn
 
 object WebServer {
@@ -18,59 +14,16 @@ object WebServer {
 
     final case class User(userName: String, int: Int, unit: Unit)
 
-    implicit val system = ActorSystem("my-system")
-    implicit val materializer = ActorMaterializer()
+    implicit val system: ActorSystem = ActorSystem("my-system")
+    implicit val materializer: ActorMaterializer = ActorMaterializer()
     // needed for the future flatMap/onComplete in the end
-    implicit val executionContext = system.dispatcher
-    val executor = system.dispatcher
+    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
-    val cache: AsyncLoadingCache[User, Int] = Scaffeine()
-      .recordStats()
-      .expireAfterWrite(20, TimeUnit.SECONDS)
-      .executor(executor)
-      .removalListener((user: User, _: Int, _: RemovalCause) => println(s"delete id: ${user.int}"))
-      .buildAsyncFuture((user: User) => {
-        println(s"no cache: ${DateTime.now.toString()}")
-        Future.successful(user.int)
-      })
-
-    val route =concat(
-      pathPrefix("hello") {
-        concat(
-          pathEnd{
-            get {
-              entity(as[String]) { json =>
-                system.log.info(json)
-                extractHost { hostName =>
-                  system.log.info(hostName)
-                  complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say hello to akka-http</h1>"))
-                }
-              }
-            }
-          },
-          path(IntNumber) { int =>
-            authenticateBasic(realm = "secure site", myUserPassAuthenticator) { userName =>
-              val user = User.apply(userName, int, Unit)
-              complete(cache.get(user).map { id =>
-                HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<h1>Say hello to $userName $id </h1>")
-              })
-            }
-          }
-        )
-      },
-      pathPrefix("delete") {
-        path(IntNumber) { int =>
-          authenticateBasic(realm = "secure site", myUserPassAuthenticator) { userName =>
-            val user = User.apply(userName, int, Unit)
-            cache.put(user, Future.failed(new RuntimeException))
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "<h1>Say delete to akka-http</h1>"))
-          }
-        }
-      }
-    )
-
-
-    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
+    val d = DIDesign.design(system)
+    val session = d.newSessionBuilder.create
+    session.start
+    
+    val bindingFuture = Http().bindAndHandle(session.build[RouteRoot].route(), "localhost", 8080)
 
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
     StdIn.readLine() // let it run until user presses return

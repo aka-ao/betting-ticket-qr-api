@@ -11,5 +11,6 @@ trait DIDesign {
   def design(system: ActorSystem) =newDesign
     .bind[ActorSystem].toInstance(system)
     .add(PresentationDesign.design)
+    .add(ApplicationDesign.design)
 
 }

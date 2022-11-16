@@ -1,30 +1,23 @@
 package model
 
-case class WinBettingTicketPayload(payload: BettingTicketPayload) {
+/**
+ * 買目通常・式別単勝または複勝の場合のPayload
+ * */
+case class NormalWinBettingTicketPayload(payload: BettingTicketPayload) extends AdditionalBettingTicketPayload {
 
   private def getBettingTicketSelection(index: Int) = {
-    payload.value.substring(index,index + 1) match {
-      case "1" => "単勝"
-      case "2" => "複勝"
-      case "3" => "枠連"
-      case "5" => "馬連"
-      case "6" => "馬単"
-      case "7" => "ワイド"
-      case "8" => "3連複"
-      case "9" => "3連単"
-      case _ => "その他"
-    }
+    BettingTicketSelection.apply(payload.value.substring(index,index + 1).toInt)
   }
 
   private def getBettingHorse(index: Int) = {
-    payload.value.substring(index + 1, index + 3).toInt
+    HoursNumber.apply(payload.value.substring(index + 1, index + 3).toInt)
   }
 
   private def getBettingCost(index: Int) = {
     payload.value.substring(index+3,index+10).toInt * 100
   }
 
-  def getWinBettingTicketInfo: List[(String, Int, Int)] = {
+  def getWinBettingTicketInfo= {
     val startIndex = 42
     var endIndex = 0
 
@@ -33,20 +26,18 @@ case class WinBettingTicketPayload(payload: BettingTicketPayload) {
       val bettingSelection = getBettingTicketSelection(index)
 
       // mapはBreakできないのでその他のIndexを記憶しておく
-      if (bettingSelection.equals("その他") && endIndex == 0) {
+      if (bettingSelection.value == 0 && endIndex == 0) {
         endIndex = i
       }
 
       val horse = getBettingHorse(index)
       val cost = getBettingCost(index)
 
-      (bettingSelection, horse, cost)
+      NormalWinBettingTicketsInfo.apply(bettingSelection, horse, cost)
     })
 
     // その他より前の要素の配列のみを取り出す
     bettingTicketInfo.slice(0, endIndex)
   }
-
-
 
 }

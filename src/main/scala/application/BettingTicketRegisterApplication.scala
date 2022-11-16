@@ -1,8 +1,7 @@
 package application
 
-import akka.actor.ActorSystem
-import model.BettingTicketPayload
+import model.{BettingTicketPayload, NormalWinBettingTicketsInfo}
 
 trait BettingTicketRegisterApplication {
-  def registerBettingTicket(payload: BettingTicketPayload)(implicit system: ActorSystem): Boolean
+  def registerBettingTicket(payload: BettingTicketPayload): List[NormalWinBettingTicketsInfo]
 }

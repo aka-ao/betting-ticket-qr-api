@@ -2,7 +2,7 @@ package model
 
 case class BettingTicketPayload(value: String) extends AnyVal {
   override def toString: String = {
-    return getArea + getYear + "年" + getTimes + "回" + getDays + "日" + getRace + "レース"
+    return getArea + getYear + "年" + getTimes + "回" + getDays + "日" + getRace + "レース " + getBettingType
   }
 
   def getArea = {

@@ -8,12 +8,15 @@ import application.actor.BettingTicketActor
 import model.{BettingTicketPayload, NormalWinBettingTicketPayload, NormalWinBettingTicketsInfo}
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
 class BettingTicketRegisterApplicationImpl extends BettingTicketRegisterApplication {
   implicit val askTimeout: Timeout = 3.seconds
 
-  override def registerBettingTicket(payload: BettingTicketPayload): List[NormalWinBettingTicketsInfo] = {
+  private val log = LoggerFactory.getLogger(this.getClass)
+
+  override def registerBettingTicket(payload: BettingTicketPayload): Future[List[NormalWinBettingTicketsInfo]] = {
 
 
     import BettingTicketActor._
@@ -31,11 +34,13 @@ class BettingTicketRegisterApplicationImpl extends BettingTicketRegisterApplicat
     val actorRef: ActorRef[BettingTicketActor.Command] = actor
 
     actor ! BettingInfo(NormalWinBettingTicketPayload(payload))
-    val response = actorRef.ask(replyTo => GetBettingInfo(replyTo))
-    response.map{ res =>
-      log.info(res.toString)
-    }
-    val bettingInfo = NormalWinBettingTicketPayload(payload).getWinBettingTicketInfo
-    bettingInfo
+    actorRef.ask(replyTo => GetBettingInfo(replyTo))
+      .map {
+        case r: ResBettingInfo =>
+          r.payload
+            .getOrElse(throw new NullPointerException())
+            .getWinBettingTicketInfo
+        case _ => throw new NullPointerException()
+      }
   }
 }

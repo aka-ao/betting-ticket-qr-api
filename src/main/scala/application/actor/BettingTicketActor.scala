@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 
 object BettingTicketActor {
 
-  val log = LoggerFactory.getLogger(this.getClass)
+  private val log = LoggerFactory.getLogger(this.getClass)
 
   sealed trait Command
   case class BettingInfo(normalWinBettingTicketPayload: NormalWinBettingTicketPayload) extends Command

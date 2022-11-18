@@ -56,12 +56,6 @@ object BettingTicketActor {
       command match {
         case g: GetBettingInfo =>
           Effect.reply(g.replyTo)(ResBettingInfo(value))
-        case b: BettingInfo => {
-          log.info("receive betting ticket info")
-          log.info(b.normalWinBettingTicketPayload.toString)
-          Effect
-            .persist(Saved(b.normalWinBettingTicketPayload))
-        }
         case _ =>
           Effect.unstashAll()
       }

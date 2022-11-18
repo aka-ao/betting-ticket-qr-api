@@ -38,9 +38,9 @@ class BettingTicketRegisterApplicationImpl extends BettingTicketRegisterApplicat
       .map {
         case r: ResBettingInfo =>
           r.payload
-            .getOrElse(throw new NullPointerException())
+            .getOrElse(throw new IllegalArgumentException())
             .getWinBettingTicketInfo
-        case _ => throw new NullPointerException()
+        case _ => throw new IllegalArgumentException()
       }
   }
 }

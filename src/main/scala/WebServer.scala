@@ -17,7 +17,7 @@ object WebServer {
     val session = d.newSessionBuilder.create
     session.start
     
-    val bindingFuture = Http().newServerAt("localhost", 8080).bind(session.build[RouteRoot].route())
+    val bindingFuture = Http().newServerAt("0.0.0.0", 8080).bind(session.build[RouteRoot].route())
 
     println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
     StdIn.readLine() // let it run until user presses return

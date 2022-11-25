@@ -13,5 +13,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence-typed" % AkkaVersion,
   "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion,
   "com.typesafe.akka" %% "akka-persistence-cassandra" % "1.1.0",
-  "org.slf4j" % "slf4j-simple" % "2.0.3"
+  "org.slf4j" % "slf4j-simple" % "2.0.3",
+  "com.auth0" % "java-jwt" % "4.2.1",
+  "com.auth0" % "jwks-rsa" % "0.21.2"
 )

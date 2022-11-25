@@ -16,7 +16,7 @@ class BettingTicketRegisterApplicationImpl extends BettingTicketRegisterApplicat
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  override def registerBettingTicket(payload: BettingTicketPayload): Future[List[NormalWinBettingTicketsInfo]] = {
+  override def registerBettingTicket(payload: BettingTicketPayload, id: String): Future[List[NormalWinBettingTicketsInfo]] = {
 
 
     import BettingTicketActor._

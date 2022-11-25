@@ -6,26 +6,30 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import application.BettingTicketRegisterApplication
 import model.BettingTicketPayload
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
-class BettingTicketRegisterPresentation(bettingTicketRegisterApplication: BettingTicketRegisterApplication, system: ActorSystem) {
+import scala.concurrent.ExecutionContextExecutor
 
-  val log = LoggerFactory.getLogger(this.getClass)
-  implicit val ec = system.dispatcher
+class BettingTicketRegisterPresentation(bettingTicketRegisterApplication: BettingTicketRegisterApplication, system: ActorSystem, auth: AuthorizationHeaderDirective) {
 
-  def route: Route = {
+  val log: Logger = LoggerFactory.getLogger(this.getClass)
+  implicit val ec: ExecutionContextExecutor = system.dispatcher
+
+
+  def route(): Route = {
     path("bettingTicketRegister" / Segment) { payload: String =>
-      get {
+      auth.authorize() { id =>
+        get {
+          val bettingTicketPayload = BettingTicketPayload.apply(payload)
+          val res = bettingTicketRegisterApplication.registerBettingTicket(bettingTicketPayload, id)
+          onSuccess(res) {
+            r => {
+              val responseHtml = StringBuilder.newBuilder
+                .append("<p>").append(bettingTicketPayload.toString).append("</p>")
+                .append("<p>").append(r.mkString("<br>")).append("</p>")
 
-        val bettingTicketPayload = BettingTicketPayload.apply(payload)
-        val res = bettingTicketRegisterApplication.registerBettingTicket(bettingTicketPayload)
-        onSuccess(res) {
-          r => {
-            val responseHtml = StringBuilder.newBuilder
-              .append("<p>").append(bettingTicketPayload.toString).append("</p>")
-              .append("<p>").append(r.mkString("<br>")).append("</p>")
-
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,responseHtml.result()))
+              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, responseHtml.result()))
+            }
           }
         }
       }
